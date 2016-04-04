@@ -59,25 +59,25 @@ void setup() {
 }
 
 void loop() {
-//    fadeIn();
-//    fadeOut();
-//    fadeIn();
-//
-//    cycle(1);
-//    cycleReverse(0);
-//    fadeIn();
-//    fadeOut();
-//    fadeIn();
-//
-//    cycleReverse(1);
-//    cycle(0);
-    runBelt();
+    fadeIn();
+    fadeOut();
+    fadeIn();
+
+    cycle(1);
+    cycleReverse(0);
+    fadeIn();
+    fadeOut();
+    fadeIn();
+
+    cycleReverse(1);
+    cycle(0);
 }
 
 void runBelt() {
     belt[beltLED % BELT_SIZE] = ColorFromPalette(RainbowColors_p, beltCounter, 255, LINEARBLEND);
     beltCounter += 10;
     beltLED++;
+    FastLED.show();
 }
 
 void cycle(int colorful) {
@@ -98,7 +98,7 @@ void cycle(int colorful) {
             r1--;
             r2++;
         }
-        belt[i % BELT_SIZE] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        runBelt();
         counter += 10;
         FastLED.show();
         FastLED.delay(DELAY);
@@ -122,7 +122,7 @@ void cycleReverse(int colorful) {
             r1++;
             r2--;
         }
-        belt[i % BELT_SIZE] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        runBelt();
         counter += 10;
         FastLED.show();
         FastLED.delay(DELAY);
@@ -131,6 +131,7 @@ void cycleReverse(int colorful) {
 
 void fadeIn() {
     for (int i = 0; i <= BRIGHTNESS; i++) {
+        runBelt();
         FastLED.setBrightness(i);
         fill_rainbow(strap, STRAP_SIZE, thishue, deltahue);
         fill_rainbow(ring, RING_SIZE, thishue, deltahue);
@@ -140,6 +141,7 @@ void fadeIn() {
 
 void fadeOut() {
     for (int i = 255; i >= BRIGHTNESS; i--) {
+        runBelt();
         FastLED.setBrightness(i);
         fill_rainbow(strap, STRAP_SIZE, thishue, deltahue);
         fill_rainbow(ring, RING_SIZE, thishue, deltahue);
