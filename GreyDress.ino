@@ -1,11 +1,15 @@
 #include <Arduino.h>
-#include "LPD8806.h"
+#include "FastLED/FastLED.h"
 
-#define SMALL_STRAP_SIZE 18
+#define BRIGHTNESS  200
+#define COLOR_ORDER GRB
+
+#define SMALL_STRAP_SIZE 16
 #define BIG_STRAP_SIZE 20
-#define MIDDLE_STRAP_SIZE 19
+#define MIDDLE_STRAP_SIZE 18
 
-#define TOTAL_PIXELS 99
+#define MIDDLE_SHOULDER_SIZE 38
+#define TOTAL_PIXELS 20
 
 #define CLOCK 0
 
@@ -16,202 +20,203 @@
 #define MIDDLE 1
 
 #define DELAY 10
+#define DELAY_PULSE 1
 
-LPD8806 leftSmallStrip = LPD8806(SMALL_STRAP_SIZE, SMALL_LEFT, CLOCK);
-LPD8806 leftBigStrip = LPD8806(BIG_STRAP_SIZE, BIG_LEFT, CLOCK);
-LPD8806 rightSmallStrip = LPD8806(SMALL_STRAP_SIZE, SMALL_RIGHT, CLOCK);
-LPD8806 rightBigStrip = LPD8806(BIG_STRAP_SIZE, BIG_RIGHT, CLOCK);
-LPD8806 middleStrip = LPD8806(MIDDLE_STRAP_SIZE, MIDDLE, CLOCK);
+#define SOLID_COUNTER 25
+#define GLOBAL_COUNTER 15
 
-// Function prototypes
-void startStrips();
+CRGB smallStrap[SMALL_STRAP_SIZE];
+CRGB bigStrap[BIG_STRAP_SIZE];
+CRGB middleStrap[MIDDLE_STRAP_SIZE];
 
-void showStrips();
+void cycle(int rainbow);
+void cycleReverse(int rainbow);
 
-void animateMiddle(uint8_t wait);
+void fadeIn(int rainbow, CRGB color);
+void fadeOut(int rainbow, CRGB color);
 
-void animateStraps(uint8_t wait);
+void cycleFromCenter(int rainbow, CRGB color);
+void cycleReverseToCenter(int rainbow, CRGB color);
 
-void animateMiddleReverse(uint8_t wait);
+void fillRainbow();
+void fillSolid(CRGB color);
 
-void animateStrapsReverse(uint8_t wait);
+uint8_t thishue = 0;
+uint8_t deltahue = 10;
 
-void colorWipe(uint32_t c, uint8_t wait, LPD8806 strip);
+uint8_t centerCounter = 0;
+uint8_t reverseCenterCounter = 0;
 
-void colorWipeStraps(uint32_t c, uint8_t wait);
+uint8_t counter = 0;
+uint8_t solidCounter = 0;
 
-void colorWipeReverse(uint32_t c, uint8_t wait, LPD8806 strip);
+int loopCounter = 0;
 
-void colorWipeStrapsReverse(uint32_t c, uint8_t wait);
-
-uint32_t Wheel(uint16_t WheelPos, LPD8806 strip);
-
-uint32_t colors[] = {
-        middleStrip.Color(0, 0, 0),
-        middleStrip.Color(0, 255, 0),
-        middleStrip.Color(0, 0, 255),
-        middleStrip.Color(0, 255, 0),
-        middleStrip.Color(0, 0, 0)
-};
-
+CRGB rainbowColors[MIDDLE_SHOULDER_SIZE];
 
 void setup() {
-    delay(1);
-    startStrips();
-    showStrips();
-}
+    FastLED.addLeds<LPD8806, SMALL_LEFT, CLOCK, COLOR_ORDER>(smallStrap, SMALL_STRAP_SIZE);
+    FastLED.addLeds<LPD8806, SMALL_RIGHT, CLOCK, COLOR_ORDER>(smallStrap, SMALL_STRAP_SIZE);
+    FastLED.addLeds<LPD8806, BIG_LEFT, CLOCK, COLOR_ORDER>(bigStrap, BIG_STRAP_SIZE);
+    FastLED.addLeds<LPD8806, BIG_RIGHT, CLOCK, COLOR_ORDER>(bigStrap, BIG_STRAP_SIZE);
+    FastLED.addLeds<LPD8806, MIDDLE, CLOCK, COLOR_ORDER>(middleStrap, MIDDLE_STRAP_SIZE);
 
+    FastLED.setCorrection(TypicalLEDStrip);
+    FastLED.setBrightness(BRIGHTNESS);
+
+
+    uint8_t count = 0;
+
+    for(int i = 0; i < MIDDLE_SHOULDER_SIZE; i++) {
+        rainbowColors[i] = ColorFromPalette(RainbowColors_p, count, 255, LINEARBLEND);
+        count += GLOBAL_COUNTER / 2;
+    }
+}
 
 void loop() {
-    animateMiddle(DELAY);
-    animateStraps(DELAY);
 
-    animateStrapsReverse(DELAY);
-    animateMiddleReverse(DELAY);
+//    if (loopCounter % 8  == 0) {
+//        cycle(1);
+//        cycleReverse(1);
+//    }
+//
+//    fadeOut(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+//    solidCounter += SOLID_COUNTER;
+//    fadeIn(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+//    solidCounter += SOLID_COUNTER;
+//
+//    loopCounter++;
 
-    for(int i = 0; i < 5; i++) {
-        colorWipe(colors[i], DELAY, middleStrip);
-        colorWipeStraps(colors[i], DELAY);
+    cycleFromCenter(1, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+//    solidCounter += SOLID_COUNTER;
+    cycleFromCenter(0, CRGB::Black);
+
+    cycleReverseToCenter(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+    solidCounter += SOLID_COUNTER;
+    cycleReverseToCenter(0, CRGB::Black);
+
+}
+
+void cycle(int rainbow) {
+
+    for (int i = MIDDLE_STRAP_SIZE; i >= 0; i--) {
+        middleStrap[i] = rainbow == 1 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        counter += GLOBAL_COUNTER;
+        FastLED.show();
+        FastLED.delay(DELAY);
     }
 
-//    colorWipeReverse(middleStrip.Color(0, 0, 0), DELAY, middleStrip);
-//    colorWipeStrapsReverse(middleStrip.Color(0, 0, 0), DELAY);
-//    stepColorMultipleStripsReverse(DELAY, leftBigStrip.Color(0, 0, 0), allStrips);
-}
-
-void startStrips() {
-    leftSmallStrip.begin();
-    leftBigStrip.begin();
-    rightSmallStrip.begin();
-    rightBigStrip.begin();
-    middleStrip.begin();
-}
-
-void showStrips() {
-    leftSmallStrip.show();
-    leftBigStrip.show();
-    rightSmallStrip.show();
-    rightBigStrip.show();
-    middleStrip.show();
-}
-
-void colorWipe(uint32_t c, uint8_t wait, LPD8806 strip) {
-    uint16_t i;
-    for (i = 0; i < strip.numPixels(); i++) {
-        strip.setPixelColor(i, c);
-        strip.show();
-        delay(wait);
-    }
-}
-
-void colorWipeReverse(uint32_t c, uint8_t wait, LPD8806 strip) {
-    uint16_t i;
-    for (i = strip.numPixels(); i >= 0; i--) {
-        strip.setPixelColor(i, c);
-        strip.show();
-        delay(wait);
+    for (int i = BIG_STRAP_SIZE; i >= 0; i--) {
+        if (i < 18) {
+            smallStrap[i] = rainbow == 1 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        }
+        bigStrap[i] = rainbow == 1 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        counter += GLOBAL_COUNTER;
+        FastLED.show();
+        FastLED.delay(DELAY);
     }
 }
 
-void colorWipeStraps(uint32_t c, uint8_t wait) {
-    for(uint16_t i = 0; i < leftBigStrip.numPixels(); i++) {
-        leftBigStrip.setPixelColor(i, c);
-        rightBigStrip.setPixelColor(i, c);
-        leftSmallStrip.setPixelColor(i, c);
-        rightSmallStrip.setPixelColor(i, c);
-        showStrips();
-        delay(wait);
+void cycleReverse(int rainbow) {
+
+    for (int i = 0; i < BIG_STRAP_SIZE; i++) {
+        if (i > 2) {
+            smallStrap[i] = rainbow == 1 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        }
+        bigStrap[i] = rainbow == 1 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        counter += GLOBAL_COUNTER;
+        FastLED.show();
+        FastLED.delay(DELAY);
+    }
+
+    for (int i = 0; i < MIDDLE_STRAP_SIZE; i++) {
+        middleStrap[i] = rainbow == 1 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+        counter += GLOBAL_COUNTER;
+        FastLED.show();
+        FastLED.delay(DELAY);
     }
 }
 
-void colorWipeStrapsReverse(uint32_t c, uint8_t wait) {
-    for(uint16_t i = leftBigStrip.numPixels(); i >= 0; i--) {
-        leftBigStrip.setPixelColor(i, c);
-        rightBigStrip.setPixelColor(i, c);
-        leftSmallStrip.setPixelColor(i, c);
-        rightSmallStrip.setPixelColor(i, c);
-        showStrips();
-        delay(wait);
+void cycleFromCenter(int rainbow, CRGB color) {
+
+    for(int i = 0; i < TOTAL_PIXELS; i++) {
+
+        if (rainbow == 1) {
+            if (i <= SMALL_STRAP_SIZE) {
+                smallStrap[SMALL_STRAP_SIZE - i] = rainbowColors[i + MIDDLE_STRAP_SIZE + 2];
+            }
+
+            if (i < MIDDLE_STRAP_SIZE) {
+                middleStrap[i] = rainbowColors[MIDDLE_STRAP_SIZE - i];
+            }
+
+            bigStrap[BIG_STRAP_SIZE - i] = rainbowColors[BIG_STRAP_SIZE - i];
+        } else {
+            if (i <= SMALL_STRAP_SIZE) {
+                smallStrap[SMALL_STRAP_SIZE - i] = color;
+            }
+
+            if (i < MIDDLE_STRAP_SIZE) {
+                middleStrap[i] = color;
+            }
+
+            bigStrap[BIG_STRAP_SIZE - i] = color;
+        }
+
+        FastLED.show();
+        FastLED.delay(DELAY);
     }
 }
 
+void cycleReverseToCenter(int rainbow, CRGB color) {
 
-void animateMiddle(uint8_t wait) {
-    uint16_t i, j, p;
-    p = MIDDLE_STRAP_SIZE;
-    for (i = 0; i <= MIDDLE_STRAP_SIZE; i++) {
-        uint32_t color = Wheel(((i * 384 / middleStrip.numPixels()) + j) % 384, middleStrip);
-        middleStrip.setPixelColor(p, color);
-        p--;
-        middleStrip.show();
-        delay(wait);
+    for(int i = 0; i < TOTAL_PIXELS; i++) {
+        if (i < SMALL_STRAP_SIZE) {
+            smallStrap[i] = color;
+        }
+
+        if (i <= MIDDLE_STRAP_SIZE) {
+            middleStrap[MIDDLE_STRAP_SIZE - i] = color;
+        }
+
+        bigStrap[i] = color;
+        FastLED.show();
+        FastLED.delay(DELAY);
     }
 }
 
-void animateStraps(uint8_t wait) {
-    uint16_t i, p, x;
-    p = BIG_STRAP_SIZE;
-    x = MIDDLE_STRAP_SIZE;
-    for (i = 0; i <= BIG_STRAP_SIZE; i++) {
-        uint32_t color = Wheel(((x * 384 / leftBigStrip.numPixels())) % 384, leftBigStrip);
-        leftSmallStrip.setPixelColor(p, color);
-        leftBigStrip.setPixelColor(p, color);
-        rightBigStrip.setPixelColor(p, color);
-        rightSmallStrip.setPixelColor(p, color);
-        p--;
-        x++;
-        showStrips();
-        delay(wait);
+void fadeIn(int rainbow, CRGB color) {
+    for (int i = 0; i <= BRIGHTNESS; i++) {
+        FastLED.setBrightness(i);
+        if (rainbow == 1) {
+            fillRainbow();
+        } else {
+            fillSolid(color);
+        }
+        FastLED.show();
     }
 }
 
-void animateMiddleReverse(uint8_t wait) {
-    uint16_t i, p;
-    p = BIG_STRAP_SIZE;
-    for (i = 0; i <= MIDDLE_STRAP_SIZE; i++) {
-        middleStrip.setPixelColor(i, Wheel(((p * 384 / middleStrip.numPixels())) % 384, middleStrip));
-        p++;
-        middleStrip.show();
-        delay(wait);
+void fadeOut(int rainbow, CRGB color) {
+    for (int i = BRIGHTNESS; i >= 0; i--) {
+        FastLED.setBrightness(i);
+        if (rainbow == 1) {
+            fillRainbow();
+        } else {
+            fillSolid(color);
+        }
+        FastLED.show();
     }
 }
 
-void animateStrapsReverse(uint8_t wait) {
-    uint16_t i;
-    for (i = 0; i <= BIG_STRAP_SIZE; i++) {
-        leftSmallStrip.setPixelColor(i, Wheel(((i * 384 / leftSmallStrip.numPixels())) % 384, leftSmallStrip));
-        leftBigStrip.setPixelColor(i, Wheel(((i * 384 / leftBigStrip.numPixels())) % 384, leftBigStrip));
-        rightBigStrip.setPixelColor(i, Wheel(((i * 384 / rightBigStrip.numPixels())) % 384, rightBigStrip));
-        rightSmallStrip.setPixelColor(i, Wheel(((i * 384 / rightSmallStrip.numPixels())) % 384, rightSmallStrip));
-        showStrips();
-        delay(wait);
-    }
+void fillRainbow() {
+    fill_rainbow(smallStrap, SMALL_STRAP_SIZE, thishue, deltahue);
+    fill_rainbow(bigStrap, BIG_STRAP_SIZE, thishue, deltahue);
+    fill_rainbow(middleStrap, MIDDLE_STRAP_SIZE, thishue, deltahue);
 }
 
-uint32_t Wheel(uint16_t WheelPos, LPD8806 strip) {
-    byte r, g, b;
-    switch (WheelPos / 128) {
-        case 0:
-            r = 127 - WheelPos % 128; // red down
-            g = WheelPos % 128;       // green up
-            b = 0;                    // blue off
-            break;
-        case 1:
-            g = 127 - WheelPos % 128; // green down
-            b = WheelPos % 128;       // blue up
-            r = 0;                    // red off
-            break;
-        case 2:
-            b = 127 - WheelPos % 128; // blue down
-            r = WheelPos % 128;       // red up
-            g = 0;                    // green off
-            break;
-        default:
-            r = 255;
-            g = 255;
-            b = 255;
-            break;
-
-    }
-    return (strip.Color(r, g, b));
+void fillSolid(CRGB color) {
+    fill_solid(smallStrap, SMALL_STRAP_SIZE, color);
+    fill_solid(bigStrap, BIG_STRAP_SIZE, color);
+    fill_solid(middleStrap, MIDDLE_STRAP_SIZE, color);
 }

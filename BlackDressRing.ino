@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "FastLED/FastLED.h"
 
-#define BRIGHTNESS  125
+#define BRIGHTNESS  255
 #define COLOR_ORDER GRB
 
 #define RING_SIZE 24
@@ -17,6 +17,7 @@
 #define STRAP_LEFT 6
 #define STRAP_RIGHT 12
 
+#define SOLID_COUNTER 25
 #define DELAY 10
 
 CRGB ring[RING_SIZE];
@@ -35,11 +36,13 @@ void cycle(int colorful);
 
 void cycleReverse(int colorful);
 
-void fadeIn();
+void fadeIn(int rainbow);
 
-void fadeOut();
+void fadeOut(int rainbow);
 
-void runBelt();
+void runBelt(int rainbow);
+void cyleFadeAnimation();
+void fillColor(CRGB color);
 
 // Initialize global variables for sequences
 uint8_t counter = 0;
@@ -47,6 +50,8 @@ uint8_t thishue = 0;
 uint8_t deltahue = 10;
 uint8_t beltCounter = 0;
 int beltLED = 0;
+
+uint8_t solidCounter = 0;
 
 void setup() {
     FastLED.addLeds<LPD8806, STRAP_LEFT, CLOCK, COLOR_ORDER>(strap, STRAP_SIZE);
@@ -59,26 +64,48 @@ void setup() {
 }
 
 void loop() {
-    fadeIn();
-    fadeOut();
-    fadeIn();
+    cyleFadeAnimation();
+}
+
+void cyleFadeAnimation() {
+    fadeIn(1);
 
     cycle(1);
     cycleReverse(0);
-    fadeIn();
-    fadeOut();
-    fadeIn();
 
+    fillColor(ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+
+    fadeOut(0);
+    fadeIn(0);
+
+    solidCounter += SOLID_COUNTER;
     cycleReverse(1);
     cycle(0);
+
+
+    fillColor(ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+
+    fadeIn(0);
+    fadeOut(0);
+    solidCounter += SOLID_COUNTER;
 }
 
-void runBelt() {
-    belt[beltLED % BELT_SIZE] = ColorFromPalette(RainbowColors_p, beltCounter, 255, LINEARBLEND);
-    beltCounter += 10;
-    beltLED++;
+void runBelt(int rainbow) {
+    if (rainbow == 1) {
+        belt[beltLED % BELT_SIZE] = ColorFromPalette(RainbowColors_p, beltCounter, 255, LINEARBLEND);
+        beltCounter += 10;
+        beltLED++;
+    } else {
+        fill_solid(belt, BELT_SIZE + 1, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+    }
     FastLED.show();
 }
+
+void fillColor(CRGB color) {
+    fill_solid(strap, STRAP_SIZE +1, color);
+    fill_solid(ring, RING_SIZE +1, color);
+}
+
 
 void cycle(int colorful) {
     int r1 = 15;
@@ -98,7 +125,7 @@ void cycle(int colorful) {
             r1--;
             r2++;
         }
-        runBelt();
+        runBelt(1);
         counter += 10;
         FastLED.show();
         FastLED.delay(DELAY);
@@ -122,29 +149,34 @@ void cycleReverse(int colorful) {
             r1++;
             r2--;
         }
-        runBelt();
+        runBelt(1);
         counter += 10;
         FastLED.show();
         FastLED.delay(DELAY);
     }
 }
 
-void fadeIn() {
+
+void fadeIn(int rainbow) {
     for (int i = 0; i <= BRIGHTNESS; i++) {
-        runBelt();
+        runBelt(rainbow);
         FastLED.setBrightness(i);
-        fill_rainbow(strap, STRAP_SIZE, thishue, deltahue);
-        fill_rainbow(ring, RING_SIZE, thishue, deltahue);
+        if (rainbow == 1) {
+            fill_rainbow(strap, STRAP_SIZE, thishue, deltahue);
+            fill_rainbow(ring, RING_SIZE, thishue, deltahue);
+        }
         FastLED.show();
     }
 }
 
-void fadeOut() {
-    for (int i = 255; i >= BRIGHTNESS; i--) {
-        runBelt();
+void fadeOut(int rainbow) {
+    for (int i = BRIGHTNESS; i >= 0; i--) {
+        runBelt(rainbow);
         FastLED.setBrightness(i);
-        fill_rainbow(strap, STRAP_SIZE, thishue, deltahue);
-        fill_rainbow(ring, RING_SIZE, thishue, deltahue);
+        if (rainbow == 1) {
+            fill_rainbow(strap, STRAP_SIZE, thishue, deltahue);
+            fill_rainbow(ring, RING_SIZE, thishue, deltahue);
+        }
         FastLED.show();
     }
 }

@@ -115,10 +115,13 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/Lightning.ino" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Spring2016_Dresses.ino" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/NeopixelRingTest.ino" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/BlackDressRing.ino" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/PulseAnimationTest.ino" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/FastLedTest.ino" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/BlackDressRing.ino" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Testing.ino" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/NeopixelRingTest.ino" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/FeatherRingTest.ino" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/FeatherWingTest.ino" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/GreyDress.ino" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/Platform/Arduino.cmake" isTestSource="false" />

@@ -66,7 +66,6 @@ void loop() {
     rainbow_march();
     rainbow_beat();
     blendme();
-
     show_at_max_brightness_for_power();
 }
 
