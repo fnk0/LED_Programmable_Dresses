@@ -14,10 +14,10 @@
 #define CLOCK 0
 
 #define SMALL_LEFT 10
-#define BIG_LEFT 6
-#define SMALL_RIGHT 12
-#define BIG_RIGHT 9
-#define MIDDLE 1
+#define BIG_LEFT 1
+#define SMALL_RIGHT 9
+#define BIG_RIGHT 6
+#define MIDDLE 12
 
 #define DELAY 10
 #define DELAY_PULSE 1
@@ -30,15 +30,19 @@ CRGB bigStrap[BIG_STRAP_SIZE];
 CRGB middleStrap[MIDDLE_STRAP_SIZE];
 
 void cycle(int rainbow);
+
 void cycleReverse(int rainbow);
 
 void fadeIn(int rainbow, CRGB color);
+
 void fadeOut(int rainbow, CRGB color);
 
 void cycleFromCenter(int rainbow, CRGB color);
+
 void cycleReverseToCenter(int rainbow, CRGB color);
 
 void fillRainbow();
+
 void fillSolid(CRGB color);
 
 uint8_t thishue = 0;
@@ -51,6 +55,33 @@ uint8_t counter = 0;
 uint8_t solidCounter = 0;
 
 int loopCounter = 0;
+
+int globalCounter = 0;
+
+#define CYCLE 0
+#define FADE 1
+#define CYCLE_CENTER 2
+#define CYCLE_REVERSE 3
+#define RAINBOW 4
+
+#define ANIMATIONS_SIZE 14
+
+int animations[ANIMATIONS_SIZE] = {
+        CYCLE,
+        FADE,
+        CYCLE_CENTER,
+        CYCLE_REVERSE,
+        RAINBOW,
+        CYCLE_REVERSE,
+        CYCLE_CENTER,
+        FADE,
+        CYCLE,
+        RAINBOW,
+        CYCLE_CENTER,
+        CYCLE_REVERSE,
+        FADE,
+        RAINBOW
+};
 
 CRGB rainbowColors[MIDDLE_SHOULDER_SIZE];
 
@@ -67,7 +98,7 @@ void setup() {
 
     uint8_t count = 0;
 
-    for(int i = 0; i < MIDDLE_SHOULDER_SIZE; i++) {
+    for (int i = 0; i < MIDDLE_SHOULDER_SIZE; i++) {
         rainbowColors[i] = ColorFromPalette(RainbowColors_p, count, 255, LINEARBLEND);
         count += GLOBAL_COUNTER / 2;
     }
@@ -75,25 +106,63 @@ void setup() {
 
 void loop() {
 
-//    if (loopCounter % 8  == 0) {
-//        cycle(1);
-//        cycleReverse(1);
-//    }
+    if (loopCounter % 8 == 0) {
+        cycle(1);
+        cycleReverse(1);
+    }
 //
-//    fadeOut(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
-//    solidCounter += SOLID_COUNTER;
-//    fadeIn(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
-//    solidCounter += SOLID_COUNTER;
-//
-//    loopCounter++;
+    fadeOut(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+    solidCounter += SOLID_COUNTER;
+    fadeIn(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+    solidCounter += SOLID_COUNTER;
+
+    loopCounter++;
 
     cycleFromCenter(1, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
-//    solidCounter += SOLID_COUNTER;
+    solidCounter += SOLID_COUNTER;
     cycleFromCenter(0, CRGB::Black);
 
     cycleReverseToCenter(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
     solidCounter += SOLID_COUNTER;
     cycleReverseToCenter(0, CRGB::Black);
+
+}
+
+void animateDress() {
+
+    int pos = globalCounter % ANIMATIONS_SIZE;
+    int animation = animations[pos];
+
+    switch (animation) {
+        case 0:
+            cycleFromCenter(1, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+//                cycle(1);
+            cycleReverse(1);
+            break;
+        case 1:
+            fadeOut(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+            solidCounter += SOLID_COUNTER;
+            fadeIn(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+            solidCounter += SOLID_COUNTER;
+            break;
+        case 2:
+            cycleFromCenter(1, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+            solidCounter += SOLID_COUNTER;
+            cycleFromCenter(0, CRGB::Black);
+            break;
+        case 3:
+            cycleReverseToCenter(0, ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
+            solidCounter += SOLID_COUNTER;
+            cycleReverseToCenter(0, CRGB::Black);
+            break;
+        case 4:
+            fillRainbow();
+            break;
+        default:
+            fillRainbow();
+            break;
+    }
+    globalCounter++;
 
 }
 
@@ -139,7 +208,7 @@ void cycleReverse(int rainbow) {
 
 void cycleFromCenter(int rainbow, CRGB color) {
 
-    for(int i = 0; i < TOTAL_PIXELS; i++) {
+    for (int i = 0; i < TOTAL_PIXELS; i++) {
 
         if (rainbow == 1) {
             if (i <= SMALL_STRAP_SIZE) {
@@ -170,7 +239,7 @@ void cycleFromCenter(int rainbow, CRGB color) {
 
 void cycleReverseToCenter(int rainbow, CRGB color) {
 
-    for(int i = 0; i < TOTAL_PIXELS; i++) {
+    for (int i = 0; i < TOTAL_PIXELS; i++) {
         if (i < SMALL_STRAP_SIZE) {
             smallStrap[i] = color;
         }

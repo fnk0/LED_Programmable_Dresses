@@ -32,14 +32,13 @@ void rainbow_march();
 
 void animateStrapsReverse();
 
-void cycle(int colorful);
+void cycle(int colorful, CRGB color);
 
-void cycleReverse(int colorful);
+void cycleReverse(int colorful, CRGB color);
 
 void fadeIn(int rainbow);
 
 void fadeOut(int rainbow);
-
 void runBelt(int rainbow);
 void cyleFadeAnimation();
 void fillColor(CRGB color);
@@ -70,8 +69,8 @@ void loop() {
 void cyleFadeAnimation() {
     fadeIn(1);
 
-    cycle(1);
-    cycleReverse(0);
+    cycle(1, CRGB::Black);
+    cycleReverse(0, CRGB::Black);
 
     fillColor(ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
 
@@ -79,15 +78,20 @@ void cyleFadeAnimation() {
     fadeIn(0);
 
     solidCounter += SOLID_COUNTER;
-    cycleReverse(1);
-    cycle(0);
-
+    cycleReverse(1, CRGB::Black);
+    cycle(0, CRGB::Black);
 
     fillColor(ColorFromPalette(RainbowColors_p, solidCounter, 255, LINEARBLEND));
 
-    fadeIn(0);
-    fadeOut(0);
+    fadeIn(1);
+    fadeOut(1);
     solidCounter += SOLID_COUNTER;
+
+    fadeIn(1);
+    cycleReverse(0, CRGB::Black);
+    cycle(1, CRGB::Black);
+
+    fadeOut(0);
 }
 
 void runBelt(int rainbow) {
@@ -107,21 +111,21 @@ void fillColor(CRGB color) {
 }
 
 
-void cycle(int colorful) {
+void cycle(int colorful, CRGB color) {
     int r1 = 15;
     int r2 = 16;
     for (int i = 0; i < TOTAL_PIXELS; i++) {
 
         if (i < 14) {
-            strap[i] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            strap[i] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
         } else if (i > 25) {
-            strap[i - 12] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            strap[i - 12] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
         } else {
-            ring[r1] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            ring[r1] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
             if (r2 == 24) {
                 r2 = 0;
             }
-            ring[r2] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            ring[r2] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
             r1--;
             r2++;
         }
@@ -132,20 +136,20 @@ void cycle(int colorful) {
     }
 }
 
-void cycleReverse(int colorful) {
+void cycleReverse(int colorful, CRGB color) {
     int r1 = 4;
     int r2 = 3;
     for (int i = TOTAL_PIXELS; i >= 0; i--) {
         if (i < 14) {
-            strap[i] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            strap[i] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
         } else if (i > 25) {
-            strap[i - 12] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            strap[i - 12] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
         } else {
-            ring[r1] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            ring[r1] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
             if (r2 == 0) {
                 r2 = 23;
             }
-            ring[r2] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : CRGB::Black;
+            ring[r2] = colorful == 0 ? ColorFromPalette(RainbowColors_p, counter, 255, LINEARBLEND) : color;
             r1++;
             r2--;
         }
@@ -158,7 +162,7 @@ void cycleReverse(int colorful) {
 
 
 void fadeIn(int rainbow) {
-    for (int i = 0; i <= BRIGHTNESS; i++) {
+    for (int i = 0; i < BRIGHTNESS; i++) {
         runBelt(rainbow);
         FastLED.setBrightness(i);
         if (rainbow == 1) {
